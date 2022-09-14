@@ -5,14 +5,14 @@ import (
 	"time"
 )
 
-func philosoph(firstFork chan bool, secondFork chan bool, index int, satisfied chan bool) {
+func philosoph(firstForkSend chan bool, firstForkRecv chan bool, secondForkSend chan bool, secondForkRecv chan bool, index int, satisfied chan bool) {
 	timesEaten := 0
 
 	for {
-		canUseFirstFork := <-firstFork
-		firstFork <- false
-		canUseSecondFork := <-secondFork
-		secondFork <- false
+		canUseFirstFork := <-firstForkSend
+		firstForkRecv <- false
+		canUseSecondFork := <-secondForkSend
+		secondForkRecv <- false
 
 		if canUseFirstFork && canUseSecondFork {
 			fmt.Printf("%d is eating\n", index)
@@ -20,64 +20,60 @@ func philosoph(firstFork chan bool, secondFork chan bool, index int, satisfied c
 			if timesEaten == 3 {
 				satisfied <- true
 			}
-			<-firstFork
-			firstFork <- true
-			<-secondFork
-			secondFork <- true
+			<-firstForkSend
+			firstForkRecv <- true
+			<-secondForkSend
+			secondForkRecv <- true
 			time.Sleep(2 * time.Second)
-			// time.Sleep(time.Duration(rand.Intn(5) * int(time.Second)))
 		} else {
 			if canUseFirstFork {
-				<-firstFork
-				firstFork <- true
+				<-firstForkSend
+				firstForkRecv <- true
 			}
 			if canUseSecondFork {
-				<-secondFork
-				secondFork <- true
+				<-secondForkSend
+				secondForkRecv <- true
 			}
 			fmt.Printf("%d is thinking\n", index)
-			// time.Sleep(time.Duration(rand.Intn(5) * int(time.Second)))
 			time.Sleep(2 * time.Second)
 			fmt.Println("Done thinking")
 		}
-
 	}
-
 }
 
-// func fork() {
-// 	for {
-// 		if <-channel1 {
-
-// 		}
-// 	}
-// }
+func fork(sendChannel chan<- bool, reciveChannel <-chan bool){
+	sendChannel <- true
+	for {
+		available := <- reciveChannel
+		sendChannel <- available
+	}
+}
 
 func main() {
-	fork0cha := make(chan bool, 1)
-	fork1cha := make(chan bool, 1)
-	fork2cha := make(chan bool, 1)
-	fork3cha := make(chan bool, 1)
-	fork4cha := make(chan bool, 1)
-	fork0cha <- true
-	fork1cha <- true
-	fork2cha <- true
-	fork3cha <- true
-	fork4cha <- true
-
-	// forkChannels := make([]chan bool, 5)
-	// forkChannels[0] = fork0cha
-	// forkChannels[1] = fork1cha
-	// forkChannels[2] = fork2cha
-	// forkChannels[3] = fork3cha
-	// forkChannels[4] = fork4cha
+	fork0chRecv := make(chan bool, 1)
+	fork1chRecv := make(chan bool, 1)
+	fork2chRecv := make(chan bool, 1)
+	fork3chRecv := make(chan bool, 1)
+	fork4chRecv := make(chan bool, 1)
+	
+	fork0chSend := make(chan bool, 1)
+	fork1chSend := make(chan bool, 1)
+	fork2chSend := make(chan bool, 1)
+	fork3chSend := make(chan bool, 1)
+	fork4chSend := make(chan bool, 1)
+	
+	go fork(fork0chSend, fork0chRecv)
+	go fork(fork1chSend, fork1chRecv)
+	go fork(fork2chSend, fork2chRecv)
+	go fork(fork3chSend, fork3chRecv)
+	go fork(fork4chSend, fork4chRecv)
 
 	satisfied := make(chan bool, 5)
-	go philosoph(fork0cha, fork1cha, 0, satisfied)
-	go philosoph(fork1cha, fork2cha, 1, satisfied)
-	go philosoph(fork2cha, fork3cha, 2, satisfied)
-	go philosoph(fork3cha, fork4cha, 3, satisfied)
-	go philosoph(fork4cha, fork0cha, 4, satisfied)
+	go philosoph(fork0chSend, fork0chRecv, fork1chSend, fork1chRecv, 0, satisfied)
+	go philosoph(fork1chSend, fork1chRecv, fork2chSend, fork2chRecv, 1, satisfied)
+	go philosoph(fork2chSend, fork2chRecv, fork3chSend, fork3chRecv, 2, satisfied)
+	go philosoph(fork3chSend, fork3chRecv, fork4chSend, fork4chRecv, 3, satisfied)
+	go philosoph(fork4chSend, fork4chRecv, fork0chSend, fork0chRecv, 4, satisfied)
 
 	for i := 0; i < 5; i++ {
 		<-satisfied
