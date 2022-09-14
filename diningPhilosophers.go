@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+// Everytime a philosopher tries to pick two forks up and one of them can't be used,
+// he puts the other fork down and starts thinking.
+// Due to the somewhat random runtime of each philosopher, they will inevitably find two free forks and eat.
+
 func philosoph(firstForkSend chan bool, firstForkRecv chan bool, secondForkSend chan bool, secondForkRecv chan bool, index int, satisfied chan bool) {
 	timesEaten := 0
 
@@ -15,7 +19,7 @@ func philosoph(firstForkSend chan bool, firstForkRecv chan bool, secondForkSend 
 		secondForkRecv <- false
 
 		if canUseFirstFork && canUseSecondFork {
-			fmt.Printf("%d is eating\n", index)
+			fmt.Printf("Philosopher %d is eating\n", index)
 			timesEaten++
 			if timesEaten == 3 {
 				satisfied <- true
@@ -34,17 +38,16 @@ func philosoph(firstForkSend chan bool, firstForkRecv chan bool, secondForkSend 
 				<-secondForkSend
 				secondForkRecv <- true
 			}
-			fmt.Printf("%d is thinking\n", index)
+			fmt.Printf("Philosopher %d is thinking\n", index)
 			time.Sleep(2 * time.Second)
-			fmt.Println("Done thinking")
 		}
 	}
 }
 
-func fork(sendChannel chan<- bool, reciveChannel <-chan bool){
+func fork(sendChannel chan<- bool, reciveChannel <-chan bool) {
 	sendChannel <- true
 	for {
-		available := <- reciveChannel
+		available := <-reciveChannel
 		sendChannel <- available
 	}
 }
@@ -55,13 +58,13 @@ func main() {
 	fork2chRecv := make(chan bool, 1)
 	fork3chRecv := make(chan bool, 1)
 	fork4chRecv := make(chan bool, 1)
-	
+
 	fork0chSend := make(chan bool, 1)
 	fork1chSend := make(chan bool, 1)
 	fork2chSend := make(chan bool, 1)
 	fork3chSend := make(chan bool, 1)
 	fork4chSend := make(chan bool, 1)
-	
+
 	go fork(fork0chSend, fork0chRecv)
 	go fork(fork1chSend, fork1chRecv)
 	go fork(fork2chSend, fork2chRecv)
