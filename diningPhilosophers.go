@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+//Made by otja, brml and kbej
+
 // Everytime a philosopher tries to pick two forks up and one of them can't be used,
 // he puts the other fork down and starts thinking.
 // Due to the somewhat random runtime of each philosopher, they will inevitably find two free forks and eat.
